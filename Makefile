@@ -1,15 +1,17 @@
 CC = g++
 CFLAGS = -Wall -Wextra -Werror -g
 
-SRC = src/main.cpp
+SRC = src/*.cpp src/*.c
+INCLUDE = -Idependencies/include
+LIB = -Ldependencies/lib -l:libglfw3.a -l:libglm.a
 
-all: build
+all: run
 
 build: $(SRC)
-	$(CC) $(CFLAGS) $(SRC) -o calc
+	$(CC) $(SRC) $(INCLUDE) $(LIB) -o calc
 
 run: build
 	./calc
 
 clean:
-	rm -f test
+	rm -f calc
