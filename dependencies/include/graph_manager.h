@@ -16,6 +16,7 @@
 
 #include "command_manager.h"
 #include "axes.h"
+#include "math_manager.h"
 #include "shader.h"
 #include "rectf.h"
 
@@ -40,7 +41,6 @@ private:
 
     Axes* axes;
 
-    void command_thread(CommandManager* cm);
-    void update();
+    void process_commands();
     void render();
 };

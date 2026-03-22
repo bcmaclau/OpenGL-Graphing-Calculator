@@ -55,7 +55,7 @@ void GraphManager::run() {
     std::thread commandThread(&CommandManager::command_loop, commandManager);
 
     while (!glfwWindowShouldClose(window)) {
-        update();
+        process_commands();
         render();
 
         glfwSwapBuffers(window);
@@ -65,16 +65,20 @@ void GraphManager::run() {
     commandThread.join();
 }
 
-void GraphManager::update() {
-
-    //Processing commands
+void GraphManager::process_commands() {
     if (!commandQueue.empty()) {
         if (commandQueue.front() == "quit") {
             glfwSetWindowShouldClose(window, true);
         }
-        else if (commandQueue.front() == "test") {
-            std::cout << "testing" << std::endl;
+        else if (commandQueue.front() == "add" && commandQueue.size() == 3) {
             commandQueue.pop();
+            std::string name = commandQueue.front();
+            commandQueue.pop();
+            std::string expression = commandQueue.front();
+            commandQueue.pop();
+
+            std::cout << name << "(2) = " << MathManager::eval_ExpressionTree(MathManager::RPN_to_ExpressionTree(MathManager::infix_to_RPN(expression)), 2.0f) << std::endl;
+
             commandCV.notify_one();
         }
     }
