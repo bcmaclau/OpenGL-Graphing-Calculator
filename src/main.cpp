@@ -1,12 +1,7 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
-#include <iostream>
-
-#include "graph_manager.h"
+#include "graph.h"
 
 int main() {
-    GraphManager* graph = new GraphManager();
+    Graph* graph = new Graph();
     
     graph->run();
 
