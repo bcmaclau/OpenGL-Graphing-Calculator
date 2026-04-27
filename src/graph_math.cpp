@@ -1,16 +1,12 @@
 #include <graph.h>
 
 Graph::ExpTree* Graph::gen_exp_tree(std::string name) {
-    //The first half of this function converts the infix string to a queue of parsed string tokens in RPN using the shunting yard algorithm
-    std::string input = nameToInfix[name];
-    char token;
-    std::string currentDigit = "";
-    std::queue<std::string> outputQueue;
-    std::stack<std::string> operatorStack;
+    std::string infix = nameToInfix[name];
+    std::stack<char> operatorStack;
+    std::stack<ExpTree*> nodeStack;
 
     std::unordered_map<char, int> precedences;
     std::unordered_map<char, int> associativities;
-
     precedences['+'] = 2;
     associativities['+'] = 'l';
     precedences['-'] = 2;
@@ -22,109 +18,109 @@ Graph::ExpTree* Graph::gen_exp_tree(std::string name) {
     precedences['^'] = 4;
     associativities['^'] = 'r';
 
-    for (int i = 0; i < input.size(); i++) {
-        token = input.at(i);
+    std::string operand;
 
-        if (std::isdigit(token) || token == '.' || (token == '-' && currentDigit == "")) {
-            currentDigit.append(1, token);
+    std::string sugar = "";
+    for (int i = 0; i < infix.size(); i++) {
+        char token = infix.at(i);
+        sugar += token;
+        if ((std::isdigit(token) && i + 1 < infix.size() && (infix.at(i + 1) == '(' || infix.at(i + 1) == 'x')) ||
+            (token == 'x' && i + 1 < infix.size() && infix.at(i + 1) == '(') ||
+            (token == ')' && i + 1 < infix.size() && (std::isdigit(infix.at(i + 1)) || infix.at(i + 1) == 'x')) ||
+            (token == ')' && i + 1 < infix.size() && infix.at(i + 1) == '(')) {
+            sugar += '*';
         }
-        if (token == 'x') {
-            if (currentDigit == "-") {
-                currentDigit.append("1");
-            }
-            if (currentDigit != "") {
-                outputQueue.push(currentDigit);
-                currentDigit = "";
+        else if ((token == '-' && i == 0 && infix.at(i + 1) == '(')) {
+            sugar += '1';
+            sugar += '*';
+        }
+    }
+    infix = sugar;
 
-                token = '*';
-                if (!operatorStack.empty()) {
-                    std::string o2 = operatorStack.top();
-                    while (!operatorStack.empty() && o2 != "(" && (precedences[o2.at(0)] > precedences[token] || (precedences[o2.at(0)] == precedences[token] && associativities[token] == 'l'))) {
-                        outputQueue.push(operatorStack.top());
-                        operatorStack.pop();
-                    }
-                }
-                operatorStack.push(std::string(1, token));
+    for (int i = 0; i < infix.size(); i++) {
+        char token = infix.at(i);
+
+        if (std::isdigit(token) || token == '.' || (i == 0 && token == '-')) {
+            operand = "";
+            operand += token;
+            for (int j = i + 1; j < infix.size() && (std::isdigit(infix.at(j)) || infix.at(j) == '.'); j++) {
+                operand += infix.at(j);
+                i++;
             }
-            currentDigit = "x";
+            ExpTree* cNode = new ExpTree();
+            cNode->type = 'c';
+            cNode->data = std::stof(operand);
+            cNode->left = nullptr;
+            cNode->right = nullptr;
+            nodeStack.push(cNode);
         }
-        else if (token == '+' || token == '-' || token == '*' || token == '/' || token == '^') {
-            outputQueue.push(currentDigit);
-            currentDigit = "";
-            
-            if (!operatorStack.empty()) {
-                std::string o2 = operatorStack.top();
-                while (!operatorStack.empty() && o2 != "(" && (precedences[o2.at(0)] > precedences[token] || (precedences[o2.at(0)] == precedences[token] && associativities[token] == 'l'))) {
-                    outputQueue.push(operatorStack.top());
-                    operatorStack.pop();
-                }
-            }
-            operatorStack.push(std::string(1, token));
-            
+        else if (token == 'x') {
+            ExpTree* xNode = new ExpTree();
+            xNode->type = 'x';
+            xNode->data = 0.0f;
+            xNode->left = nullptr;
+            xNode->right = nullptr;
+            nodeStack.push(xNode);
         }
         else if (token == '(') {
-            outputQueue.push(currentDigit);
-            currentDigit = "";
-            operatorStack.push(std::string(1, token));
+            operatorStack.push('(');
         }
         else if (token == ')') {
-            while (operatorStack.top() != "(") {
-                outputQueue.push(operatorStack.top());
+            char op = operatorStack.top();
+            operatorStack.pop();
+            while (op != '(') {
+                ExpTree* opNode = new ExpTree();
+                opNode->type = op;
+                opNode->data = 0.0f;
+                opNode->right = nodeStack.top();
+                nodeStack.pop();
+                opNode->left = nodeStack.top();
+                nodeStack.pop();
+                nodeStack.push(opNode);
+
+                op = operatorStack.top();
                 operatorStack.pop();
             }
-            operatorStack.pop();
+        }
+        else if (precedences.find(token) != precedences.end()) {
+            while (!operatorStack.empty()) {
+                char top = operatorStack.top();
+
+                if (top != '(' && (precedences[top] > precedences[token] || (precedences[top] == precedences[token] && associativities[token] == 'l'))) {
+                    operatorStack.pop();
+                    
+                    ExpTree* opNode = new ExpTree();
+                    opNode->type = top;
+                    opNode->data = 0.0f;
+                    opNode->right = nodeStack.top();
+                    nodeStack.pop();
+                    opNode->left = nodeStack.top();
+                    nodeStack.pop();
+                    nodeStack.push(opNode);
+                }
+                else {
+                    break;
+                }
+            }
+
+            operatorStack.push(token);
         }
     }
 
-    if (currentDigit != "") {
-        outputQueue.push(currentDigit);
-    }
     while (!operatorStack.empty()) {
-        outputQueue.push(operatorStack.top());
+        char op = operatorStack.top();
         operatorStack.pop();
+        ExpTree* opNode = new ExpTree();
+        opNode->type = op;
+        opNode->data = 0.0f;
+        opNode->right = nodeStack.top();
+        nodeStack.pop();
+        opNode->left = nodeStack.top();
+        nodeStack.pop();
+        nodeStack.push(opNode);
     }
 
-    //The infix expression is now converted into a queue of tokens in RPN
-    //The queue will now be transformed into an expression tree
-    //The benefit for calculating values using expression trees vs RPN is there are no string comparisons or conversions
-    std::string t;
-    std::stack<ExpTree*> treeStack;
-
-    while (!outputQueue.empty()) {
-        t = outputQueue.front();
-        
-        outputQueue.pop();
-        char firstC = t.at(0);
-
-        if (firstC == '-' || std::isdigit(firstC) || firstC == '.') {
-            ExpTree* newTree = new ExpTree();
-            newTree->type = 'c';
-            newTree->data = std::stof(t);
-            newTree->left = nullptr;
-            newTree->right = nullptr;
-            treeStack.push(newTree);
-        }
-        else if (t == "x") {
-            ExpTree* newTree = new ExpTree();
-            newTree->type = 'x';
-            newTree->data = 0.0f;
-            newTree->left = nullptr;
-            newTree->right = nullptr;
-            treeStack.push(newTree);
-        }
-        else if (t == "+" || t == "-" || t == "*" || t == "/" || t == "^") {
-            ExpTree* newTree = new ExpTree();
-            newTree->type = firstC;
-            newTree->data = 0.0f;
-            newTree->right = treeStack.top();
-            treeStack.pop();
-            newTree->left = treeStack.top();
-            treeStack.pop();
-            treeStack.push(newTree);
-        }
-    }
-
-    return treeStack.top();
+    return nodeStack.top();
 }
 
 float Graph::eval_exp_tree(ExpTree* tree, float xValue) {
@@ -159,7 +155,9 @@ void Graph::gen_graph_array_buffer() {
     int arrayIndex = 0;
     float x, y;
     float deltaPixel = graphRect.width / screenRect.width;
+    renderOrder.clear();
     for (const auto& pair : nameToExpTree) {
+        renderOrder.push_back(pair.first);
         for (int i = 0; i < (int)screenRect.width; i++) {
             x = graphRect.left + i * deltaPixel;
             y = eval_exp_tree(pair.second, x);

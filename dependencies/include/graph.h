@@ -22,14 +22,17 @@
 #include <glm/gtc/type_ptr.hpp>
 
 class Graph {
+
+    //Project Pipeline: Input Fetching Component -> Input Processing Component -> GUI Processing Component -> Math Component -> Rendering Component
+
 public:
     Graph();
     ~Graph();
 
-    /*
-    Project Pipeline: Input Fetching Component -> Input Processing Component -> Math Component -> Rendering Component
-    */
+    //Initial Run
+    void run();
 
+private:
     /*
     Input Fetching Component
     The input function will push command strings to a queue.
@@ -43,16 +46,27 @@ public:
     std::condition_variable inputCV;
     void input_thread();
 
-    //Input Processing Component
-    //The input and all other components will be processed in the main thread as OpenGL is not thread-safe and no other components interfere with it.
-    //The processing thread will only process a command once the first string in the command queue is valid, and the length of the queue matches.
-    //After processing the command, it will signal to the input thread to accept mroe input.
+    /*
+    Input Processing Component
+    The input and all other components will be processed in the main thread as OpenGL is not thread-safe and no other components interfere with it.
+    The processing thread will only process a command once the first string in the command queue is valid, and the length of the queue matches.
+    After processing the command, it will signal to the input thread to accept mroe input.
+    */
     void process_input();
 
-    //Math component
-    //The math component will handle converting expressions entered by the user.
-    //First it will transform infix expressions into RPN, then to an expression tree.
-    //Evaluating points of a line and calculating derivatives is easer for computers to do using expression trees.
+    /*
+    GUI Processing Component
+    This component will record and handle all actions the user can input through the graph itself, not the CLI.
+    The GUI features include panning, zooming, and window resizing.
+    These features will be implemented through GLFW funcitons and callbacks.
+    */
+
+    /*
+    Math component
+    The math component will handle converting expressions entered by the user.
+    First it will transform infix expressions into RPN, then to an expression tree.
+    Evaluating points of a line and calculating derivatives is easer for computers to do using expression trees.
+    */
     struct ExpTree {
         ExpTree* left;
         ExpTree* right;
@@ -66,10 +80,25 @@ public:
     
     ExpTree* gen_exp_tree(std::string name);
     float eval_exp_tree(ExpTree* tree, float xValue);
+    void simplify_exp_tree(ExpTree* tree);
+
+    //This is an expensive function that should only be called at most once per frame.
+    //Because the IP and GUI components can both determine whether the AB should be regenerated, this bool will help buffer the calls.
+    bool regenArrayBuffer;
     void gen_graph_array_buffer();
 
-    //Rendering Component
-    //The rendering component will render all expression entered by the user to the window.
+    /*
+    GUI Processing Component
+    This section contains the mouse callback function for GLFW and will update the window and graph rectangles.
+    */
+    void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+
+    /*
+    Rendering Component
+    The rendering component will render all expressions entered by the user to the window.
+    Rendering will be implemented through OpenGL and GLFW
+    This component will keep track of all functions and their expression trees, the order of rending, and the colors of the lines.
+    */
     struct RectF {
         float left;
         float right;
@@ -81,7 +110,9 @@ public:
     GLFWwindow* window;
     
     Shader* solidShader;
-    void set_solid_color(float r, float g, float b);
+    void set_solid_color(glm::vec3 rgb);
+    std::unordered_map<std::string, glm::vec3> nameToColor;
+    int colorCycle;
 
     RectF graphRect;
     RectF screenRect;
@@ -92,9 +123,7 @@ public:
     unsigned int gVAO, gVBO;
     float* graphArrayBuffer;
     int numVertices;
+    std::vector<std::string> renderOrder;
     
     void render();
-
-    //Initial Run
-    void run();
 };

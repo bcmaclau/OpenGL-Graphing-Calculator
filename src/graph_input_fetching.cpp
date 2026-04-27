@@ -56,5 +56,33 @@ void Graph::input_thread() {
             std::unique_lock<std::mutex> lock(inputMutex);
             inputCV.wait(lock);
         }
+
+        else if (input == "remove") {
+            if (nameSet.size() == 0) {
+                std::cout << "There are no functions to remove." << std::endl;
+            }
+            else {
+                commandQueue.push(input);
+
+                std::cout << "Enter function to remove: ";
+                std::cin >> input;
+                while (nameSet.find(input) == nameSet.end()) {
+                    std::cout << "No function named \"" << input << "\", Reenter: ";
+                    std::cin >> input;
+                }
+
+                commandQueue.push(input);
+
+                std::unique_lock<std::mutex> lock(inputMutex);
+                inputCV.wait(lock);
+            }
+        }
+
+        else if (input == "list") {
+            commandQueue.push(input);
+
+            std::unique_lock<std::mutex> lock(inputMutex);
+            inputCV.wait(lock);
+        }
     }
 }

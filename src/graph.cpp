@@ -55,6 +55,8 @@ Graph::Graph() {
     
     graphArrayBuffer = (float*)malloc(0);
     numVertices = 0;
+    regenArrayBuffer = false;
+    colorCycle = 0;
 
     glGenVertexArrays(1, &gVAO);
     glBindVertexArray(gVAO);
@@ -79,6 +81,12 @@ void Graph::run() {
 
     while (!glfwWindowShouldClose(window)) {
         process_input();
+
+        if (regenArrayBuffer) {
+            gen_graph_array_buffer();
+            regenArrayBuffer = false;
+        }
+
         render();
 
         glfwSwapBuffers(window);
