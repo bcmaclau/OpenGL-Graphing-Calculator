@@ -14,6 +14,7 @@ Graph::Graph() {
         return;
     }
     glfwMakeContextCurrent(window);
+    glfwSetWindowUserPointer(window, this);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
@@ -67,6 +68,24 @@ Graph::Graph() {
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
+    glLineWidth(2.0f);
+
+    leftButtonDown = false;
+    glfwSetMouseButtonCallback(window, [](GLFWwindow* w, int button, int action, int mods) {
+        static_cast<Graph*>(glfwGetWindowUserPointer(w))->mouse_button_callback(w, button, action, mods);
+    });
+
+    firstMouse = true;
+    lastX = 0.0f;
+    lastY = 0.0f;
+    glfwSetCursorPosCallback(window, [](GLFWwindow* w, double xpos, double ypos) {
+        static_cast<Graph*>(glfwGetWindowUserPointer(w))->mouse_pos_callback(w, xpos, ypos);
+    });
+
+    glfwSetKeyCallback(window, [](GLFWwindow* w, int key, int scancode, int action, int mods) {
+        static_cast<Graph*>(glfwGetWindowUserPointer(w))->key_callback(w, key, scancode, action, mods);
+    });
 }
 
 Graph::~Graph() {
@@ -84,6 +103,7 @@ void Graph::run() {
 
         if (regenArrayBuffer) {
             gen_graph_array_buffer();
+            gen_axes_array();
             regenArrayBuffer = false;
         }
 

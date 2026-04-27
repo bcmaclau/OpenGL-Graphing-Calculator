@@ -16,7 +16,6 @@ void Graph::process_input() {
             nameSet.insert(name);
             nameToInfix[name] = infix;
             nameToExpTree[name] = gen_exp_tree(name);
-            std::cout << name << "(0) = " << eval_exp_tree(nameToExpTree[name], 0.0f) << std::endl;
 
             regenArrayBuffer = true;
 

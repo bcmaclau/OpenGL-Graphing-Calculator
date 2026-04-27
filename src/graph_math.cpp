@@ -167,9 +167,30 @@ void Graph::gen_graph_array_buffer() {
         }
     }
 
+    glm::mat4 projection = glm::ortho(graphRect.left, graphRect.right, graphRect.bottom, graphRect.top, 0.1f, 100.0f);
+    solidShader->use();
+    solidShader->set_mat4(&projection, "projection");
+
     glBindVertexArray(gVAO);
     glBindBuffer(GL_ARRAY_BUFFER, gVBO);
     glBufferData(GL_ARRAY_BUFFER, newBufferSize, graphArrayBuffer, GL_DYNAMIC_DRAW);
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void Graph::gen_axes_array() {
+    axesArrayBuffer[0] = 0.0f;
+    axesArrayBuffer[1] = graphRect.top;
+    axesArrayBuffer[2] = 0.0f;
+    axesArrayBuffer[3] = graphRect.bottom;
+    axesArrayBuffer[4] = graphRect.left;
+    axesArrayBuffer[5] = 0.0f;
+    axesArrayBuffer[6] = graphRect.right;
+    axesArrayBuffer[7] = 0.0f;
+
+    glBindVertexArray(aVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, aVBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, 8 * sizeof(float), axesArrayBuffer);
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }

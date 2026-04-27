@@ -58,8 +58,16 @@ private:
     GUI Processing Component
     This component will record and handle all actions the user can input through the graph itself, not the CLI.
     The GUI features include panning, zooming, and window resizing.
-    These features will be implemented through GLFW funcitons and callbacks.
+    These features will be implemented through GLFW functions and callbacks.
     */
+    bool leftButtonDown;
+    void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+    
+    bool firstMouse;
+    float lastX, lastY;
+    void mouse_pos_callback(GLFWwindow* window, double xpos, double ypos);
+
+    void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
     /*
     Math component
@@ -86,12 +94,7 @@ private:
     //Because the IP and GUI components can both determine whether the AB should be regenerated, this bool will help buffer the calls.
     bool regenArrayBuffer;
     void gen_graph_array_buffer();
-
-    /*
-    GUI Processing Component
-    This section contains the mouse callback function for GLFW and will update the window and graph rectangles.
-    */
-    void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+    void gen_axes_array();
 
     /*
     Rendering Component
