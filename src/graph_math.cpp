@@ -17,6 +17,12 @@ Graph::ExpTree* Graph::gen_exp_tree(std::string name) {
     associativities['/'] = 'l';
     precedences['^'] = 4;
     associativities['^'] = 'r';
+    precedences['s'] = 5;
+    associativities['s'] = 'r';
+    precedences['c'] = 5;
+    associativities['c'] = 'r';
+    precedences['t'] = 5;
+    associativities['t'] = 'r';
 
     std::string operand;
 
@@ -24,18 +30,31 @@ Graph::ExpTree* Graph::gen_exp_tree(std::string name) {
     for (int i = 0; i < infix.size(); i++) {
         char token = infix.at(i);
         sugar += token;
-        if ((std::isdigit(token) && i + 1 < infix.size() && (infix.at(i + 1) == '(' || infix.at(i + 1) == 'x')) ||
-            (token == 'x' && i + 1 < infix.size() && infix.at(i + 1) == '(') ||
-            (token == ')' && i + 1 < infix.size() && (std::isdigit(infix.at(i + 1)) || infix.at(i + 1) == 'x')) ||
-            (token == ')' && i + 1 < infix.size() && infix.at(i + 1) == '(')) {
+        if ((std::isdigit(token) && i + 1 < infix.size() && (infix.at(i + 1) == '(' || infix.at(i + 1) == 'x' || infix.at(i + 1) == 'p' || infix.at(i + 1) == 'e' || infix.at(i + 1) == 's' || infix.at(i + 1) == 'c')) ||
+            (token == 'x' && i + 1 < infix.size() && (infix.at(i + 1) == '(' || infix.at(i + 1) == 'x' || infix.at(i + 1) == 'p' || infix.at(i + 1) == 'e' || infix.at(i + 1) == 's' || infix.at(i + 1) == 'c')) ||
+            (token == ')' && i + 1 < infix.size() && (std::isdigit(infix.at(i + 1)) || infix.at(i + 1) == 'x' || infix.at(i + 1) == '(' || infix.at(i + 1) == 'p' || infix.at(i + 1) == 'e' || infix.at(i + 1) == 's' || infix.at(i + 1) == 'c')) ||
+            (token == 'e' && i + 1 < infix.size() && (infix.at(i + 1) == 'x' || infix.at(i + 1) == '(' || std::isdigit(infix.at(i + 1)) || infix.at(i + 1) == 'p' || infix.at(i + 1) == 'e' || infix.at(i + 1) == 's' || infix.at(i + 1) == 'c'))) {
             sugar += '*';
         }
         else if ((token == '-' && i == 0 && infix.at(i + 1) == '(')) {
             sugar += '1';
             sugar += '*';
         }
+        else if ((token == 'c' && infix.at(i + 1) == 'o' && infix.at(i + 2) == 's') || 
+            (token == 's' && infix.at(i + 1) == 'i' && infix.at(i + 2) == 'n') || 
+            (token == 't' && infix.at(i + 1) == 'a' && infix.at(i + 2) == 'n')) {
+            i += 2;
+        }
+        else if (token == 'p' && infix.at(i + 1) == 'i') {
+            i++;
+            if (i + 1 < infix.size() && (infix.at(i + 1) == 'x' || infix.at(i + 1) == '(' || std::isdigit(infix.at(i + 1)) || infix.at(i + 1) == 'p' || infix.at(i + 1) == 'e' || infix.at(i + 1) == 's' || infix.at(i + 1) == 'c')) {
+                sugar += '*';
+            }
+        }
+
     }
     infix = sugar;
+    std::cout << infix << std::endl;
 
     for (int i = 0; i < infix.size(); i++) {
         char token = infix.at(i);
@@ -48,15 +67,15 @@ Graph::ExpTree* Graph::gen_exp_tree(std::string name) {
                 i++;
             }
             ExpTree* cNode = new ExpTree();
-            cNode->type = 'c';
+            cNode->type = '1';
             cNode->data = std::stof(operand);
             cNode->left = nullptr;
             cNode->right = nullptr;
             nodeStack.push(cNode);
         }
-        else if (token == 'x') {
+        else if (token == 'x' || token == 'e' || token == 'p') {
             ExpTree* xNode = new ExpTree();
-            xNode->type = 'x';
+            xNode->type = token;
             xNode->data = 0.0f;
             xNode->left = nullptr;
             xNode->right = nullptr;
@@ -88,7 +107,6 @@ Graph::ExpTree* Graph::gen_exp_tree(std::string name) {
 
                 if (top != '(' && (precedences[top] > precedences[token] || (precedences[top] == precedences[token] && associativities[token] == 'l'))) {
                     operatorStack.pop();
-                    
                     ExpTree* opNode = new ExpTree();
                     opNode->type = top;
                     opNode->data = 0.0f;
@@ -110,39 +128,75 @@ Graph::ExpTree* Graph::gen_exp_tree(std::string name) {
     while (!operatorStack.empty()) {
         char op = operatorStack.top();
         operatorStack.pop();
-        ExpTree* opNode = new ExpTree();
-        opNode->type = op;
-        opNode->data = 0.0f;
-        opNode->right = nodeStack.top();
-        nodeStack.pop();
-        opNode->left = nodeStack.top();
-        nodeStack.pop();
-        nodeStack.push(opNode);
+
+        if (op == 's' || op == 'c' || op == 't') {
+            ExpTree* opNode = new ExpTree();
+            opNode->type = op;
+            opNode->data = 0.0f;
+            opNode->right = nodeStack.top();
+            nodeStack.pop();
+            opNode->left = nullptr;
+            nodeStack.push(opNode);
+        }
+        else {
+            ExpTree* opNode = new ExpTree();
+            opNode->type = op;
+            opNode->data = 0.0f;
+            opNode->right = nodeStack.top();
+            nodeStack.pop();
+            opNode->left = nodeStack.top();
+            nodeStack.pop();
+            nodeStack.push(opNode);
+        }
     }
 
     return nodeStack.top();
 }
 
 float Graph::eval_exp_tree(ExpTree* tree, float xValue) {
-    if (tree->type == 'c') {
-        return tree->data;
+    float r;
+    switch (tree->type) {
+        case '1':
+            r = tree->data;
+            break;
+        case 'x':
+            r = xValue;
+            break;
+        case 'e':
+            r = std::expf(1.0f);
+            break;
+        case 'p':
+            r = M_PI;
+            break;
+        case '+':
+            r = eval_exp_tree(tree->left, xValue) + eval_exp_tree(tree->right, xValue);
+            break;
+        case '-':
+            r = eval_exp_tree(tree->left, xValue) - eval_exp_tree(tree->right, xValue);
+            break;
+        case '*':
+            r = eval_exp_tree(tree->left, xValue) * eval_exp_tree(tree->right, xValue);
+            break;
+        case '/':
+            r = eval_exp_tree(tree->left, xValue) / eval_exp_tree(tree->right, xValue);
+            break;
+        case '^':
+            r = std::powf(eval_exp_tree(tree->left, xValue), eval_exp_tree(tree->right, xValue));
+            break;
+        case 's':
+            r = std::sinf(eval_exp_tree(tree->right, xValue));
+            break;
+        case 'c':
+            r = std::cosf(eval_exp_tree(tree->right, xValue));
+            break;
+        case 't':
+            r = std::tanf(eval_exp_tree(tree->right, xValue));
+            break;
+        default:
+            r = -1.0f;
+            break;
     }
-    else if (tree->type == 'x') {
-        return xValue;
-    }
-    else if (tree->type == '+') {
-        return eval_exp_tree(tree->left, xValue) + eval_exp_tree(tree->right, xValue);
-    }
-    else if (tree->type == '-') {
-        return eval_exp_tree(tree->left, xValue) - eval_exp_tree(tree->right, xValue);
-    }
-    else if (tree->type == '*') {
-        return eval_exp_tree(tree->left, xValue) * eval_exp_tree(tree->right, xValue);
-    }
-    else if (tree->type == '/') {
-        return eval_exp_tree(tree->left, xValue) / eval_exp_tree(tree->right, xValue);
-    }
-    return std::powf(eval_exp_tree(tree->left, xValue), eval_exp_tree(tree->right, xValue));
+    return r;
 }
 
 void Graph::gen_graph_array_buffer() {
