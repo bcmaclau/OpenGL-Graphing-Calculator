@@ -54,7 +54,6 @@ Graph::ExpTree* Graph::gen_exp_tree(std::string name) {
 
     }
     infix = sugar;
-    std::cout << infix << std::endl;
 
     for (int i = 0; i < infix.size(); i++) {
         char token = infix.at(i);
