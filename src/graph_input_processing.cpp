@@ -7,6 +7,7 @@ void Graph::process_input() {
         }
 
         else if (commandQueue.front() == "add" && commandQueue.size() == 3) {
+
             commandQueue.pop();
             std::string name = commandQueue.front();
             commandQueue.pop();
@@ -77,6 +78,19 @@ void Graph::process_input() {
                     std::cout << pair.first << "(x) = " << pair.second << std::endl;
                 }
             }
+
+            inputCV.notify_one();
+        }
+
+        else if (commandQueue.front() == "eval" && commandQueue.size() == 3) {
+            commandQueue.pop();
+
+            std::string name = commandQueue.front();
+            commandQueue.pop();
+            float xValue = std::stof(commandQueue.front());
+            commandQueue.pop();
+
+            std::cout << name << "(" << xValue << ") = " << eval_exp_tree(nameToExpTree[name], xValue) << std::endl;
 
             inputCV.notify_one();
         }
