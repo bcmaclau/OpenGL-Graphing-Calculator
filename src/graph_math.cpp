@@ -40,10 +40,15 @@ Graph::ExpTree* Graph::gen_exp_tree(std::string name) {
             sugar += '1';
             sugar += '*';
         }
+        else if (token == '-' && i != 0 && infix.at(i - 1) == '(') {
+            sugar.at(sugar.size() - 1) = '0';
+            sugar += '-';
+        }
         else if ((token == 'c' && infix.at(i + 1) == 'o' && infix.at(i + 2) == 's') || 
             (token == 's' && infix.at(i + 1) == 'i' && infix.at(i + 2) == 'n') || 
             (token == 't' && infix.at(i + 1) == 'a' && infix.at(i + 2) == 'n')) {
-            i += 2;
+            
+                i += 2;
         }
         else if (token == 'p' && infix.at(i + 1) == 'i') {
             i++;
