@@ -51,6 +51,10 @@ void Graph::input_thread() {
 
             std::cout << "Enter expression: ";
             std::getline(std::cin, input);
+            while (!valid_expression(input)) {
+                std::cout << "Invalid expression, Reenter: ";
+                std::getline(std::cin, input);
+            }
             commandQueue.push(input);
 
             std::unique_lock<std::mutex> lock(inputMutex);
@@ -187,14 +191,21 @@ void Graph::input_thread() {
                 for (int i = 5; i < input.size(); i++) {
                     expression += input.at(i);
                 }
+                
+                std::cout << "Expression: " << format_infix_expression(expression) << std::endl;
+                std::cout << "Valid?: " << valid_expression(expression) << std::endl;
 
-                //TODO: Make a function to check if an expression is valid
-                commandQueue.push("add");
-                commandQueue.push(std::string(1, input.at(0)));
-                commandQueue.push(expression);
+                if (valid_expression(expression)) {
+                    commandQueue.push("add");
+                    commandQueue.push(std::string(1, input.at(0)));
+                    commandQueue.push(expression);
 
-                std::unique_lock<std::mutex> lock(inputMutex);
-                inputCV.wait(lock);
+                    std::unique_lock<std::mutex> lock(inputMutex);
+                    inputCV.wait(lock);
+                }
+                else {
+                    std::cout << "Invalid Command. Type \"help\" to list all commands." << std::endl;
+                }
             }
             else {
                 std::cout << "Invalid Command. Type \"help\" to list all commands." << std::endl;
