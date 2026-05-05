@@ -53,6 +53,8 @@ private:
     After processing the command, it will signal to the input thread to accept mroe input.
     */
     void process_input();
+    std::string format_infix_expression(std::string exp);
+    bool valid_expression(std::string exp);
 
     /*
     GUI Processing Component
