@@ -1,7 +1,7 @@
 #include <graph.h>
 
 Graph::ExpTree* Graph::gen_exp_tree(std::string name) {
-    std::string infix = nameToInfix[name];
+    std::string infix = nameToFInfix[name];
     std::stack<char> operatorStack;
     std::stack<ExpTree*> nodeStack;
 
@@ -25,8 +25,6 @@ Graph::ExpTree* Graph::gen_exp_tree(std::string name) {
     associativities['t'] = 'r';
 
     std::string operand;
-
-    infix = format_infix_expression(infix);
 
     for (int i = 0; i < infix.size(); i++) {
         char token = infix.at(i);
