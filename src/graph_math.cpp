@@ -26,39 +26,7 @@ Graph::ExpTree* Graph::gen_exp_tree(std::string name) {
 
     std::string operand;
 
-    std::string sugar = "";
-    for (int i = 0; i < infix.size(); i++) {
-        char token = infix.at(i);
-        sugar += token;
-        if ((std::isdigit(token) && i + 1 < infix.size() && (infix.at(i + 1) == '(' || infix.at(i + 1) == 'x' || infix.at(i + 1) == 'p' || infix.at(i + 1) == 'e' || infix.at(i + 1) == 's' || infix.at(i + 1) == 'c')) ||
-            (token == 'x' && i + 1 < infix.size() && (infix.at(i + 1) == '(' || infix.at(i + 1) == 'x' || infix.at(i + 1) == 'p' || infix.at(i + 1) == 'e' || infix.at(i + 1) == 's' || infix.at(i + 1) == 'c')) ||
-            (token == ')' && i + 1 < infix.size() && (std::isdigit(infix.at(i + 1)) || infix.at(i + 1) == 'x' || infix.at(i + 1) == '(' || infix.at(i + 1) == 'p' || infix.at(i + 1) == 'e' || infix.at(i + 1) == 's' || infix.at(i + 1) == 'c')) ||
-            (token == 'e' && i + 1 < infix.size() && (infix.at(i + 1) == 'x' || infix.at(i + 1) == '(' || std::isdigit(infix.at(i + 1)) || infix.at(i + 1) == 'p' || infix.at(i + 1) == 'e' || infix.at(i + 1) == 's' || infix.at(i + 1) == 'c'))) {
-            sugar += '*';
-        }
-        else if ((token == '-' && i == 0 && infix.at(i + 1) == '(')) {
-            sugar += '1';
-            sugar += '*';
-        }
-        else if (token == '-' && i != 0 && infix.at(i - 1) == '(') {
-            sugar.at(sugar.size() - 1) = '0';
-            sugar += '-';
-        }
-        else if ((token == 'c' && infix.at(i + 1) == 'o' && infix.at(i + 2) == 's') || 
-            (token == 's' && infix.at(i + 1) == 'i' && infix.at(i + 2) == 'n') || 
-            (token == 't' && infix.at(i + 1) == 'a' && infix.at(i + 2) == 'n')) {
-            
-                i += 2;
-        }
-        else if (token == 'p' && infix.at(i + 1) == 'i') {
-            i++;
-            if (i + 1 < infix.size() && (infix.at(i + 1) == 'x' || infix.at(i + 1) == '(' || std::isdigit(infix.at(i + 1)) || infix.at(i + 1) == 'p' || infix.at(i + 1) == 'e' || infix.at(i + 1) == 's' || infix.at(i + 1) == 'c')) {
-                sugar += '*';
-            }
-        }
-
-    }
-    infix = sugar;
+    infix = format_infix_expression(infix);
 
     for (int i = 0; i < infix.size(); i++) {
         char token = infix.at(i);
@@ -92,14 +60,25 @@ Graph::ExpTree* Graph::gen_exp_tree(std::string name) {
             char op = operatorStack.top();
             operatorStack.pop();
             while (op != '(') {
-                ExpTree* opNode = new ExpTree();
-                opNode->type = op;
-                opNode->data = 0.0f;
-                opNode->right = nodeStack.top();
-                nodeStack.pop();
-                opNode->left = nodeStack.top();
-                nodeStack.pop();
-                nodeStack.push(opNode);
+                if (op == 's' || op == 'c' || op == 't') {
+                    ExpTree* opNode = new ExpTree();
+                    opNode->type = op;
+                    opNode->data = 0.0f;
+                    opNode->right = nodeStack.top();
+                    nodeStack.pop();
+                    opNode->left = nullptr;
+                    nodeStack.push(opNode);
+                }
+                else {
+                    ExpTree* opNode = new ExpTree();
+                    opNode->type = op;
+                    opNode->data = 0.0f;
+                    opNode->right = nodeStack.top();
+                    nodeStack.pop();
+                    opNode->left = nodeStack.top();
+                    nodeStack.pop();
+                    nodeStack.push(opNode);
+                }
 
                 op = operatorStack.top();
                 operatorStack.pop();
@@ -111,14 +90,25 @@ Graph::ExpTree* Graph::gen_exp_tree(std::string name) {
 
                 if (top != '(' && (precedences[top] > precedences[token] || (precedences[top] == precedences[token] && associativities[token] == 'l'))) {
                     operatorStack.pop();
-                    ExpTree* opNode = new ExpTree();
-                    opNode->type = top;
-                    opNode->data = 0.0f;
-                    opNode->right = nodeStack.top();
-                    nodeStack.pop();
-                    opNode->left = nodeStack.top();
-                    nodeStack.pop();
-                    nodeStack.push(opNode);
+                    if (top == 's' || top == 'c' || top == 't') {
+                        ExpTree* opNode = new ExpTree();
+                        opNode->type = top;
+                        opNode->data = 0.0f;
+                        opNode->right = nodeStack.top();
+                        nodeStack.pop();
+                        opNode->left = nullptr;
+                        nodeStack.push(opNode);
+                    }
+                    else {
+                        ExpTree* opNode = new ExpTree();
+                        opNode->type = top;
+                        opNode->data = 0.0f;
+                        opNode->right = nodeStack.top();
+                        nodeStack.pop();
+                        opNode->left = nodeStack.top();
+                        nodeStack.pop();
+                        nodeStack.push(opNode);
+                    }
                 }
                 else {
                     break;
