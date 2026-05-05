@@ -86,6 +86,7 @@ private:
 
     std::unordered_set<std::string> nameSet;
     std::unordered_map<std::string, std::string> nameToInfix;
+    std::unordered_map<std::string, std::string> nameToFInfix;
     std::unordered_map<std::string, ExpTree*> nameToExpTree;
     
     ExpTree* gen_exp_tree(std::string name);
