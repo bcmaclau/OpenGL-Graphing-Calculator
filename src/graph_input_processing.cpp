@@ -16,6 +16,7 @@ void Graph::process_input() {
 
             nameSet.insert(name);
             nameToInfix[name] = infix;
+            nameToFInfix[name] = format_infix_expression(infix);
             nameToExpTree[name] = gen_exp_tree(name);
 
             regenArrayBuffer = true;
