@@ -114,12 +114,23 @@ std::string Graph::format_infix_expression(std::string exp) {
     funcSet.insert('s');
     funcSet.insert('c');
     funcSet.insert('t');
+    funcSet.insert('l');
+
+    std::unordered_set<char> operatorSet;
+    operatorSet.insert('+');
+    operatorSet.insert('-');
+    operatorSet.insert('*');
+    operatorSet.insert('/');
+    operatorSet.insert('^');
+    operatorSet.insert('n');
+    operatorSet.insert('s');
+    operatorSet.insert('_');
+    operatorSet.insert('g');
 
     for (int i = 0; i < exp.size(); i++) {
         char token = exp.at(i);
         noSugar += token;
         
-        //Adding multiplication between float values, numeric constants, functions, and parenthesis
         if (exp.size() > i + 1) {
             if ((std::isdigit(token) && multSet.find(exp.at(i + 1)) != multSet.end()) ||
                 (token != '(' && multSet.find(token) != multSet.end() && multSet.find(exp.at(i + 1)) != multSet.end()) ||
@@ -136,13 +147,147 @@ std::string Graph::format_infix_expression(std::string exp) {
                     noSugar += '-';
                 }
             }
-            else if (token == 's' || token == 'c' || token == 't') {
+            else if (exp.size() > i + 2 && ((token == 's' && exp.at(i + 1) == 'i' && exp.at(i + 2) == 'n') ||
+                (token == 'c' && exp.at(i + 1) == 'o' && exp.at(i + 2) == 's') ||
+                (token == 't' && exp.at(i + 1) == 'a' && exp.at(i + 2) == 'n'))) {
                 i += 2;
+            }
+            else if (token == 'l') {
+                if (exp.size() > i + 2 && exp.at(i + 1) == 'o' && exp.at(i + 2) == 'g') {
+                    i += 3;
+                    if (exp.size() > i && exp.at(i) == '(') {
+                        noSugar += '(';
+                        noSugar += '1';
+                        noSugar += '0';
+                        noSugar += ',';
+
+                        std::string sub = "";
+                        bool stop = false;
+                        int parenCount = 0;
+                        while (i < exp.size() && !stop) {
+                            char t = exp.at(i);
+
+                            if (t == '(') {
+                                parenCount++;
+                            }
+                            else if (t == ')') {
+                                parenCount--;
+                                if (parenCount == 0) {
+                                    stop = true;
+                                }
+                            }
+
+                            if (!stop) {
+                                sub += t;
+                                i++;
+                            }
+                        }
+                        sub += ')';
+                        noSugar += format_infix_expression(sub);
+                        noSugar += ')';
+                    }
+                    else if (exp.size() > i + 1 && exp.at(i) == '_') {
+                        i++;
+                        //Complicated log base
+                        if (exp.size() > i) {
+                            std::string sub = "";
+                            int parenCount = 0;
+                            bool stop = false;
+                            int start = i;
+                            while (i < exp.size() && !stop) {
+                                char t = exp.at(i);
+
+                                //Parenthesis counting
+                                if (t == '(') {
+                                    parenCount++;
+                                }
+                                else if (t == ')') {
+                                    parenCount--;
+                                }
+
+                                //Stop condition checking
+                                if (i > start && t == '(' && operatorSet.find(exp.at(i - 1)) == operatorSet.end() && parenCount == 1) {
+                                    stop = true;
+                                }
+
+                                if (!stop) {
+                                    sub += exp.at(i);
+                                    i++;
+                                }
+                            }
+                            if (sub.at(0) != '(') {
+                                std::string temp = "(";
+                                temp += sub;
+                                temp += ')';
+                                sub = temp;
+                            }
+                            sub = format_infix_expression(sub);
+                            noSugar += '(';
+                            noSugar += sub;
+                            noSugar += ',';
+                            
+                            sub = "";
+                            parenCount = 0;
+                            stop = false;
+                            while (i < exp.size() && !stop) {
+                                char t = exp.at(i);
+
+                                if (t == '(') {
+                                    parenCount++;
+                                }
+                                else if (t == ')') {
+                                    parenCount--;
+                                    if (parenCount == 0) {
+                                        stop = true;
+                                    }
+                                }
+
+                                if (!stop) {
+                                    sub += exp.at(i);
+                                    i++;
+                                }
+                            }
+                            noSugar += format_infix_expression(sub);
+                            noSugar += ')';
+                            noSugar += ')';
+                        }
+                    }
+                }
+                else if (exp.size() > i + 2 && exp.at(i + 1) == 'n' && exp.at(i + 2) == '(') {
+                    i += 2;
+                    noSugar += '(';
+                    noSugar += 'e';
+                    noSugar += ',';
+
+                    std::string sub = "";
+                    bool stop = false;
+                    int parenCount = 0;
+                    while (i < exp.size() && !stop) {
+                        char t = exp.at(i);
+
+                        if (t == '(') {
+                            parenCount++;
+                        }
+                        else if (t == ')') {
+                            parenCount--;
+                            if (parenCount == 0) {
+                                stop = true;
+                            }
+                        }
+
+                        if (!stop) {
+                            sub += t;
+                            i++;
+                        }
+                    }
+                    sub += ')';
+                    noSugar += format_infix_expression(sub);
+                    noSugar += ')';
+                }
             }
             else if (token == 'p') {
                 i++;
             }
-
             if (funcSet.find(token) != funcSet.end() && noSugar.at(noSugar.size() - 1) == '*') {
                 noSugar.erase(noSugar.size() - 1);
             }
@@ -164,15 +309,19 @@ bool Graph::valid_expression(std::string exp) {
     operatorSet.insert('/');
     operatorSet.insert('^');
 
+    std::unordered_set<char> funcSet;
+    funcSet.insert('s');
+    funcSet.insert('c');
+    funcSet.insert('t');
+    funcSet.insert('l');
+
     std::unordered_set<char> operandSet;
     operandSet.insert('x');
     operandSet.insert('e');
     operandSet.insert('p');
     operandSet.insert('(');
     operandSet.insert('.');
-    operandSet.insert('s');
-    operandSet.insert('c');
-    operandSet.insert('t');
+    operandSet.insert(funcSet.begin(), funcSet.end());
 
     std::unordered_set<char> validEnding;
     validEnding.insert('x');
@@ -180,6 +329,8 @@ bool Graph::valid_expression(std::string exp) {
     validEnding.insert('e');
     validEnding.insert('p');
     validEnding.insert('.');
+
+    std::stack<int> logParens;
 
     if (exp.size() == 1) { return (std::isdigit(exp.at(0)) || validEnding.find(exp.at(0)) != validEnding.end()) && exp.at(exp.size() - 1) != ')'; }
     if (operatorSet.find(exp.at(0)) != operatorSet.end()) { return false; }
@@ -192,6 +343,7 @@ bool Graph::valid_expression(std::string exp) {
         char token = exp.at(i);
         char next = exp.at(i + 1);
         
+        //Is a digit
         if (std::isdigit(token)) {
             if (next == '.') {
                 if (containsDot) {
@@ -201,10 +353,11 @@ bool Graph::valid_expression(std::string exp) {
                     containsDot = true;
                 }
             }
-            else if (!std::isdigit(next) && operatorSet.find(next) == operatorSet.end() && next != ')') {
+            else if (!std::isdigit(next) && operatorSet.find(next) == operatorSet.end() && next != ')' && next != ',') {
                 return false;
             }
         }
+        //Is a decimal
         else if (token == '.') {
             if (next == '.') {
                 return false;
@@ -213,6 +366,7 @@ bool Graph::valid_expression(std::string exp) {
                 return false;
             }
         }
+        //Is a parenthesis
         else if (token == '(') {
             parenCount++;
             if (next == ')' || (operandSet.find(next) == operandSet.end() && !std::isdigit(next))) {
@@ -225,27 +379,35 @@ bool Graph::valid_expression(std::string exp) {
             if (parenCount < 0) {
                 return false;
             }
-            if (operatorSet.find(next) == operatorSet.end() && next != ')') {
+            if (i == 0 || (!std::isdigit(token) && validEnding.find(token) == validEnding.end())) {
                 return false;
             }
         }
+        //Is an operand
         else if (operandSet.find(token) != operandSet.end()) {
-            if (token == 's' || token == 'c' || token == 't') {
-                if (operandSet.find(next) == operandSet.end()) {
+            if (funcSet.find(token) != funcSet.end()) {
+                if (next != '(') {
                     return false;
                 }
-            }
-            else if (token == '(') {
-                if (operandSet.find(next) == operandSet.end()) {
-                    return false;
+                if (token == 'l') {
+                    logParens.push(parenCount + 1);
                 }
             }
             else {
-                if (operatorSet.find(next) == operatorSet.end() && next != ')') {
+                if (operatorSet.find(next) == operatorSet.end() && next != ')' && next != ',') {
                     return false;
                 }
             }
         }
+        else if (token == ',') {
+            if (!logParens.empty() && i > 0 && (validEnding.find(exp.at(i - 1)) != validEnding.end() || std::isdigit(exp.at(i - 1))) && parenCount == logParens.top()) {
+                logParens.pop();
+            }
+            else {
+                return false;
+            }
+        }
+        //Is an operator
         else if (operatorSet.find(token) != operatorSet.end()) {
             containsDot = false;
             if (operandSet.find(next) == operandSet.end() && !std::isdigit(next)) {

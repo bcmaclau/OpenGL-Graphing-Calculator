@@ -23,6 +23,8 @@ Graph::ExpTree* Graph::gen_exp_tree(std::string name) {
     associativities['c'] = 'r';
     precedences['t'] = 5;
     associativities['t'] = 'r';
+    precedences['l'] = 5;
+    associativities['l'] = 'r';
 
     std::string operand;
 
@@ -183,6 +185,9 @@ float Graph::eval_exp_tree(ExpTree* tree, float xValue) {
             break;
         case 't':
             r = std::tanf(eval_exp_tree(tree->right, xValue));
+            break;
+        case 'l':
+            r = std::logf(eval_exp_tree(tree->right, xValue)) / std::logf(eval_exp_tree(tree->left, xValue));
             break;
         default:
             r = -1.0f;
