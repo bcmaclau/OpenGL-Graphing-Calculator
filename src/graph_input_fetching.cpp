@@ -191,9 +191,6 @@ void Graph::input_thread() {
                 for (int i = 5; i < input.size(); i++) {
                     expression += input.at(i);
                 }
-                
-                std::cout << "Expression: " << format_infix_expression(expression) << std::endl;
-                std::cout << "Valid?: " << valid_expression(expression) << std::endl;
 
                 if (valid_expression(expression)) {
                     commandQueue.push("add");
